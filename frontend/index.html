@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DocuQuery — RAG Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      color: #94a3b8;
+      margin-top: 8px;
+      font-size: 1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    .search-box {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .search-box input {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 1rem;
+      color: #e2e8f0;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus { border-color: #6366f1; }
+
+    .search-box button {
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .search-box button:hover { background: #4f46e5; }
+    .search-box button:disabled { background: #334155; cursor: not-allowed; }
+
+    .result-card {
+      width: 100%;
+      max-width: 680px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .result-card h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6366f1;
+      margin-bottom: 12px;
+    }
+
+    .answer-text {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: #e2e8f0;
+    }
+
+    .sources {
+      margin-top: 20px;
+    }
+
+    .sources h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+
+    .source-pill {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin: 4px 4px 0 0;
+    }
+
+    .source-pill span {
+      color: #6366f1;
+      margin-left: 6px;
+    }
+
+    .loading {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-top: 16px;
+    }
+
+    .error {
+      color: #f87171;
+      font-size: 0.95rem;
+      margin-top: 16px;
+    }
+
+    .examples {
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 28px;
+    }
+
+    .examples p {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+
+    .example-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      cursor: pointer;
+      margin: 4px 4px 0 0;
+      transition: border-color 0.2s;
+    }
+
+    .example-btn:hover { border-color: #6366f1; color: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">RAG Pipeline Demo · pgvector + Groq + HuggingFace</div>
+    <h1>DocuQuery</h1>
+    <p>Ask questions. Get answers grounded in real documents.</p>
+  </header>
+
+  <div class="examples">
+    <p>Try an example:</p>
+    <button class="example-btn" onclick="setQuestion(this)">What is this document about?</button>
+    <button class="example-btn" onclick="setQuestion(this)">Summarize the key points</button>
+    <button class="example-btn" onclick="setQuestion(this)">What are the main findings?</button>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="question" placeholder="Ask a question about the documents..." />
+    <button id="ask-btn" onclick="askQuestion()">Ask</button>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    const API = "http://localhost:8000";
+
+    function setQuestion(btn) {
+      document.getElementById("question").value = btn.textContent;
+    }
+
+    document.getElementById("question").addEventListener("keydown", e => {
+      if (e.key === "Enter") askQuestion();
+    });
+
+    async function askQuestion() {
+      const question = document.getElementById("question").value.trim();
+      if (!question) return;
+
+      const btn = document.getElementById("ask-btn");
+      const output = document.getElementById("output");
+
+      btn.disabled = true;
+      btn.textContent = "Thinking...";
+      output.innerHTML = '<p class="loading">Searching documents and generating answer...</p>';
+
+      try {
+        const res = await fetch(`${API}/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, top_k: 5 })
+        });
+
+        if (!res.ok) throw new Error("No relevant documents found.");
+        const data = await res.json();
+
+        output.innerHTML = `
+          <div class="result-card">
+            <h2>Answer</h2>
+            <p class="answer-text">${data.answer}</p>
+            <div class="sources">
+              <h3>Sources</h3>
+              ${data.sources.map(s => `
+                <span class="source-pill">${s.title}<span>${(s.similarity * 100).toFixed(1)}%</span></span>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        output.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Ask";
+      }
+    }
+  </script>
+
+</body>
+</html>
