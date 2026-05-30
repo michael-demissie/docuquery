@@ -90,7 +90,7 @@ Question: {request.question}
 Answer:"""
 
     response = groq_client.chat.completions.create(
-        model="llama3-8b-8192",
+        model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2,
         max_tokens=512,
