@@ -138,3 +138,45 @@ def list_documents(conn=Depends(get_db)):
 def delete_document(document_id: int, conn=Depends(get_db)):
     execute_query(conn, "DELETE FROM documents WHERE id = %s", (document_id,))
     return {"message": f"Document {document_id} deleted"}
+
+from fastapi import UploadFile, File
+import pypdf
+import io
+
+@app.post("/upload")
+@limiter.limit("5/minute")
+async def upload_file(request: Request, file: UploadFile = File(...), title: str = "", conn=Depends(get_db)):
+    content = await file.read()
+
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB")
+    
+    if file.filename.endswith(".pdf"):
+        reader = pypdf.PdfReader(io.BytesIO(content))
+        text = "\n".join([page.extract_text() or "" for page in reader.pages])
+    else:
+        text = content.decode("utf-8", errors="ignore")
+
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Could not extract text from file")
+
+    doc_title = title or file.filename
+    cleaned = clean_text(text)
+    chunks = chunk_text(cleaned)
+
+    doc = execute_query(
+        conn,
+        "INSERT INTO documents (title, source) VALUES (%s, %s) RETURNING id",
+        (doc_title, file.filename)
+    )
+    document_id = doc[0]["id"]
+
+    for i, chunk in enumerate(chunks):
+        embedding = embed_text(chunk)
+        execute_query(
+            conn,
+            "INSERT INTO chunks (document_id, content, embedding, chunk_index) VALUES (%s, %s, %s, %s)",
+            (document_id, chunk, embedding, i)
+        )
+
+    return {"message": f"Ingested {len(chunks)} chunks", "document_id": document_id}

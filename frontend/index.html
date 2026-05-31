@@ -209,9 +209,9 @@
       ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
       <div class="drop-zone-icon">📄</div>
       <p><span>Click to browse</span> or drag & drop</p>
-      <p style="color:var(--text3);font-size:0.78rem;margin-top:6px;">TXT files · up to 10MB</p>
+      <p style="color:var(--text3);font-size:0.78rem;margin-top:6px;">PDF, TXT · up to 10MB</p>
     </div>
-    <input type="file" id="file-input" accept=".txt" style="display:none" onchange="fileSelected(event)"/>
+    <input type="file" id="file-input" accept=".txt,.pdf" style="display:none" onchange="fileSelected(event)"/>
     <input type="text" id="doc-title" class="modal-input" placeholder="Document title (optional)"/>
     <div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
     <div class="status-msg" id="status-msg"></div>
@@ -223,7 +223,7 @@
 </div>
 
 <script>
-  const API = "https://docuquery-production-872a.up.railway.app";
+  const API = window.location.hostname === "localhost" ? "http://localhost:8000" : "https://docuquery-production-872a.up.railway.app";
   let history = [];
   let selectedFile = null;
 
@@ -307,20 +307,16 @@
     btn.disabled = true;
     progress.style.display = 'block';
     fill.style.width = '30%';
-    status.textContent = 'Reading file...';
+    status.textContent = 'Uploading file...';
     try {
-      const text = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = e => res(e.target.result);
-        r.onerror = rej;
-        r.readAsText(selectedFile);
-      });
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('title', title);
       fill.style.width = '60%';
       status.textContent = 'Chunking & embedding...';
-      const resp = await fetch(`${API}/ingest`, {
+      const resp = await fetch(`${API}/upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content: text, source: selectedFile.name })
+        body: formData
       });
       fill.style.width = '100%';
       if (resp.ok) {
@@ -329,7 +325,10 @@
         status.className = 'status-msg success';
         loadDocuments();
         setTimeout(closeUpload, 1500);
-      } else { throw new Error('Upload failed'); }
+      } else {
+        const err = await resp.json();
+        throw new Error(err.detail || 'Upload failed');
+      }
     } catch(err) {
       status.textContent = '✗ ' + err.message;
       status.className = 'status-msg error';
