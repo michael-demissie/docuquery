@@ -34,10 +34,10 @@ def read_url(url: str) -> str:
         print("beautifulsoup4 not installed. Run: pip install beautifulsoup4 lxml")
         sys.exit(1)
 
-def ingest(title: str, content: str, source: str = ""):
+def ingest(title: str, content: str, source: str = "", mode: str = "personal"):
     response = requests.post(
         f"{API_URL}/ingest",
-        json={"title": title, "content": content, "source": source}
+        json={"title": title, "content": content, "source": source, "mode": mode}
     )
     if response.status_code == 200:
         data = response.json()
@@ -50,6 +50,7 @@ if __name__ == "__main__":
     parser.add_argument("--file", help="Path to a .txt or .pdf file")
     parser.add_argument("--url", help="URL to scrape and ingest")
     parser.add_argument("--title", required=True, help="Title for this document")
+    parser.add_argument("--mode", default="personal", help="Mode: personal or jobs")
     args = parser.parse_args()
 
     if args.file:
@@ -58,11 +59,11 @@ if __name__ == "__main__":
             content = read_pdf(args.file)
         else:
             content = read_txt(args.file)
-        ingest(args.title, content, source=args.file)
+        ingest(args.title, content, source=args.file, mode=args.mode)
 
     elif args.url:
         content = read_url(args.url)
-        ingest(args.title, content, source=args.url)
+        ingest(args.title, content, source=args.url, mode=args.mode)
 
     else:
         print("Provide --file or --url")

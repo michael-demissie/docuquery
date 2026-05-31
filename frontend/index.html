@@ -37,6 +37,7 @@
     .logo-text span { color: var(--accent); }
     .upload-btn { width: 100%; background: var(--surface3); border: 1px dashed var(--border2); border-radius: var(--radius); padding: 10px 14px; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
     .upload-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+    .mode-btn.active { background: var(--accent) !important; color: white !important; border-color: var(--accent) !important; }
     .sidebar-section { padding: 14px 20px 8px; }
     .section-label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text3); margin-bottom: 10px; }
     .doc-list { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
@@ -144,13 +145,27 @@
       <div class="logo-icon">⚡</div>
       <div class="logo-text">Docu<span>Query</span></div>
     </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;">
+      <button class="mode-btn active" data-mode="personal" onclick="switchMode('personal')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.15s;">
+        📄 Personal
+      </button>
+      <button class="mode-btn" data-mode="jobs" onclick="switchMode('jobs')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.15s;">
+        💼 DC Jobs
+      </button>
+    </div>
+    <div id="upload-area">
     <button class="upload-btn" onclick="openUpload()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       Upload document
     </button>
+    </div>
+    <div id="jobs-info" style="display:none;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:0.78rem;color:var(--text2);line-height:1.5;">
+      🔄 Updated daily via Airflow<br/>
+      <span style="color:var(--text3)">Federal tech jobs in DC</span>
+    </div>
   </div>
   <div class="sidebar-section">
-    <div class="section-label">Knowledge Base</div>
+    <div class="section-label" id="section-label">Knowledge Base</div>
   </div>
   <div class="doc-list" id="doc-list">
     <div class="empty-docs" id="empty-docs">No documents yet.<br/>Upload a file to get started.</div>
@@ -226,6 +241,19 @@
   const API = window.location.hostname === "localhost" ? "http://localhost:8000" : "https://docuquery-production-872a.up.railway.app";
   let history = [];
   let selectedFile = null;
+  let currentMode = "personal";
+
+  function switchMode(mode) {
+    currentMode = mode;
+    history = [];
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
+    document.getElementById('upload-area').style.display = mode === "personal" ? "block" : "none";
+    document.getElementById('jobs-info').style.display = mode === "jobs" ? "block" : "none";
+    document.getElementById('section-label').textContent = mode === "personal" ? "Knowledge Base" : "Live Job Data";
+    clearChat();
+    loadDocuments();
+  }
 
   function autoResize(el) {
     el.style.height = 'auto';
@@ -238,7 +266,7 @@
 
   async function loadDocuments() {
     try {
-      const res = await fetch(`${API}/documents`);
+      const res = await fetch(`${API}/documents?mode=${currentMode}`);
       const data = await res.json();
       renderDocs(data.documents);
     } catch(e) {}
@@ -449,7 +477,7 @@
       const res = await fetch(`${API}/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, top_k: 5, history })
+        body: JSON.stringify({ question, top_k: 5, history, mode: currentMode })
       });
 
       if (!res.ok) throw new Error('No relevant documents found in knowledge base.');

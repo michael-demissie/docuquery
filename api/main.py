@@ -132,8 +132,8 @@ Context:
     return StreamingResponse(stream(), media_type="text/event-stream")
 
 @app.get("/documents")
-def list_documents(conn=Depends(get_db)):
-    docs = execute_query(conn, "SELECT id, title, source, created_at FROM documents ORDER BY created_at DESC")
+def list_documents(mode: str = "personal", conn=Depends(get_db)):
+    docs = execute_query(conn, "SELECT id, title, source, created_at, mode FROM documents WHERE mode = %s ORDER BY created_at DESC", (mode,))
     return {"documents": docs}
 
 @app.delete("/documents/{document_id}")
