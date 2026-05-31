@@ -1,0 +1,86 @@
+[[34m2026-05-31T07:00:36.667-0400[0m] {[34mtask_context_logger.py:[0m63} INFO[0m - Task context logging is enabled[0m
+[[34m2026-05-31T07:00:36.670-0400[0m] {[34mexecutor_loader.py:[0m235} INFO[0m - Loaded executor: SequentialExecutor[0m
+[[34m2026-05-31T07:00:36.711-0400[0m] {[34mscheduler_job_runner.py:[0m796} INFO[0m - Starting the scheduler[0m
+[[34m2026-05-31T07:00:36.712-0400[0m] {[34mscheduler_job_runner.py:[0m803} INFO[0m - Processing each file at most -1 times[0m
+[[34m2026-05-31T07:00:36.715-0400[0m] {[34mmanager.py:[0m170} INFO[0m - Launched DagFileProcessorManager with pid: 12139[0m
+[[34m2026-05-31T07:00:36.718-0400[0m] {[34mscheduler_job_runner.py:[0m1595} INFO[0m - Adopting or resetting orphaned tasks for active dag runs[0m
+[[34m2026-05-31T07:00:37.056-0400[0m] {[34msettings.py:[0m60} INFO[0m - Configured default timezone UTC[0m
+[2026-05-31T07:00:37.062-0400] {manager.py:393} WARNING - Because we cannot use more than 1 thread (parsing_processes = 2) when using sqlite. So we set parallelism to 1.
+[[34m2026-05-31T07:02:11.022-0400[0m] {[34mdag.py:[0m3954} INFO[0m - Setting next_dagrun for usajobs_dc_tech_ingest to 2026-05-31 07:00:00+00:00, run_after=2026-06-01 07:00:00+00:00[0m
+[[34m2026-05-31T07:02:11.039-0400[0m] {[34mscheduler_job_runner.py:[0m417} INFO[0m - 2 tasks up for execution:
+	<TaskInstance: usajobs_dc_tech_ingest.fetch_and_ingest_jobs scheduled__2026-05-30T07:00:00+00:00 [scheduled]>
+	<TaskInstance: usajobs_dc_tech_ingest.fetch_and_ingest_jobs manual__2026-05-31T11:02:10.414360+00:00 [scheduled]>[0m
+[[34m2026-05-31T07:02:11.039-0400[0m] {[34mscheduler_job_runner.py:[0m480} INFO[0m - DAG usajobs_dc_tech_ingest has 0/16 running and queued tasks[0m
+[[34m2026-05-31T07:02:11.039-0400[0m] {[34mscheduler_job_runner.py:[0m480} INFO[0m - DAG usajobs_dc_tech_ingest has 1/16 running and queued tasks[0m
+[[34m2026-05-31T07:02:11.040-0400[0m] {[34mscheduler_job_runner.py:[0m596} INFO[0m - Setting the following tasks to queued state:
+	<TaskInstance: usajobs_dc_tech_ingest.fetch_and_ingest_jobs scheduled__2026-05-30T07:00:00+00:00 [scheduled]>
+	<TaskInstance: usajobs_dc_tech_ingest.fetch_and_ingest_jobs manual__2026-05-31T11:02:10.414360+00:00 [scheduled]>[0m
+[[34m2026-05-31T07:02:11.041-0400[0m] {[34mscheduler_job_runner.py:[0m639} INFO[0m - Sending TaskInstanceKey(dag_id='usajobs_dc_tech_ingest', task_id='fetch_and_ingest_jobs', run_id='scheduled__2026-05-30T07:00:00+00:00', try_number=1, map_index=-1) to executor with priority 1 and queue default[0m
+[[34m2026-05-31T07:02:11.041-0400[0m] {[34mbase_executor.py:[0m149} INFO[0m - Adding to queue: ['airflow', 'tasks', 'run', 'usajobs_dc_tech_ingest', 'fetch_and_ingest_jobs', 'scheduled__2026-05-30T07:00:00+00:00', '--local', '--subdir', 'DAGS_FOLDER/usajobs_ingest.py'][0m
+[[34m2026-05-31T07:02:11.041-0400[0m] {[34mscheduler_job_runner.py:[0m639} INFO[0m - Sending TaskInstanceKey(dag_id='usajobs_dc_tech_ingest', task_id='fetch_and_ingest_jobs', run_id='manual__2026-05-31T11:02:10.414360+00:00', try_number=1, map_index=-1) to executor with priority 1 and queue default[0m
+[[34m2026-05-31T07:02:11.041-0400[0m] {[34mbase_executor.py:[0m149} INFO[0m - Adding to queue: ['airflow', 'tasks', 'run', 'usajobs_dc_tech_ingest', 'fetch_and_ingest_jobs', 'manual__2026-05-31T11:02:10.414360+00:00', '--local', '--subdir', 'DAGS_FOLDER/usajobs_ingest.py'][0m
+[[34m2026-05-31T07:02:11.042-0400[0m] {[34msequential_executor.py:[0m74} INFO[0m - Executing command: ['airflow', 'tasks', 'run', 'usajobs_dc_tech_ingest', 'fetch_and_ingest_jobs', 'scheduled__2026-05-30T07:00:00+00:00', '--local', '--subdir', 'DAGS_FOLDER/usajobs_ingest.py'][0m
+[[34m2026-05-31T07:02:11.046-0400[0m] {[34mscheduler_job_runner.py:[0m860} ERROR[0m - Exception when executing SchedulerJob._run_scheduler_loop[0m
+Traceback (most recent call last):
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/jobs/scheduler_job_runner.py", line 843, in _execute
+    self._run_scheduler_loop()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/jobs/scheduler_job_runner.py", line 977, in _run_scheduler_loop
+    self.job.executor.heartbeat()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/executors/base_executor.py", line 244, in heartbeat
+    self.sync()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/executors/sequential_executor.py", line 77, in sync
+    subprocess.check_call(command, close_fds=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 368, in check_call
+    retcode = call(*popenargs, **kwargs)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 349, in call
+    with Popen(*popenargs, **kwargs) as p:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 951, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 1821, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'airflow'[0m
+[[34m2026-05-31T07:02:11.053-0400[0m] {[34msequential_executor.py:[0m74} INFO[0m - Executing command: ['airflow', 'tasks', 'run', 'usajobs_dc_tech_ingest', 'fetch_and_ingest_jobs', 'scheduled__2026-05-30T07:00:00+00:00', '--local', '--subdir', 'DAGS_FOLDER/usajobs_ingest.py'][0m
+[[34m2026-05-31T07:02:11.055-0400[0m] {[34mscheduler_job_runner.py:[0m866} ERROR[0m - Exception when executing Executor.end[0m
+Traceback (most recent call last):
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/jobs/scheduler_job_runner.py", line 843, in _execute
+    self._run_scheduler_loop()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/jobs/scheduler_job_runner.py", line 977, in _run_scheduler_loop
+    self.job.executor.heartbeat()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/executors/base_executor.py", line 244, in heartbeat
+    self.sync()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/executors/sequential_executor.py", line 77, in sync
+    subprocess.check_call(command, close_fds=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 368, in check_call
+    retcode = call(*popenargs, **kwargs)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 349, in call
+    with Popen(*popenargs, **kwargs) as p:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 951, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 1821, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'airflow'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/jobs/scheduler_job_runner.py", line 864, in _execute
+    self.job.executor.end()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/executors/sequential_executor.py", line 87, in end
+    self.heartbeat()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/executors/base_executor.py", line 244, in heartbeat
+    self.sync()
+  File "/Users/mikael_abyssinia/Library/Python/3.9/lib/python/site-packages/airflow/executors/sequential_executor.py", line 77, in sync
+    subprocess.check_call(command, close_fds=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 368, in check_call
+    retcode = call(*popenargs, **kwargs)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 349, in call
+    with Popen(*popenargs, **kwargs) as p:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 951, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 1821, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'airflow'[0m
+[[34m2026-05-31T07:02:12.066-0400[0m] {[34mprocess_utils.py:[0m132} INFO[0m - Sending Signals.SIGTERM to group 12139. PIDs of all processes in the group: [12139][0m
+[[34m2026-05-31T07:02:12.068-0400[0m] {[34mprocess_utils.py:[0m87} INFO[0m - Sending the signal Signals.SIGTERM to group 12139[0m
+[[34m2026-05-31T07:02:12.206-0400[0m] {[34mprocess_utils.py:[0m80} INFO[0m - Process psutil.Process(pid=12139, status='terminated', exitcode=0, started='07:00:36') (12139) terminated with exit code 0[0m
+[[34m2026-05-31T07:02:12.207-0400[0m] {[34mscheduler_job_runner.py:[0m872} INFO[0m - Exited execute loop[0m

@@ -1,10 +1,11 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.models import Variable
 from datetime import datetime, timedelta
 import requests
 import os
 
-API_URL = os.getenv("DOCUQUERY_API_URL", "https://docuquery-production-872a.up.railway.app")
+API_URL = Variable.get("DOCUQUERY_API_URL", default_var="https://docuquery-production-872a.up.railway.app")
 
 TECH_KEYWORDS = [
     "data engineer", "software engineer", "machine learning",
@@ -21,8 +22,8 @@ default_args = {
 def fetch_and_ingest_jobs():
     headers = {
         "Host": "data.usajobs.gov",
-        "User-Agent": "michael.demissie@gwu.edu",
-        "Authorization-Key": os.getenv("USAJOBS_API_KEY", "")
+        "User-Agent": "YOUR_EMAIL",
+        "Authorization-Key": Variable.get("USAJOBS_API_KEY", default_var=os.getenv("USAJOBS_API_KEY", ""))
     }
 
     all_jobs = []
