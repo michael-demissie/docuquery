@@ -1,4 +1,4 @@
-FROM nginx:alpine
-COPY nginx.conf /etc/nginx/templates/default.conf.template
-COPY . /usr/share/nginx/html
-CMD ["nginx", "-g", "daemon off;"]
+FROM python:3.11-slim
+WORKDIR /app
+COPY . .
+CMD ["sh", "-c", "python -m http.server $PORT"]
