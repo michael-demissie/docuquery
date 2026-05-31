@@ -23,6 +23,8 @@ services:
     build: ./api
     container_name: docuquery_api
     env_file: .env
+    environment:
+      - PORT=8000
     ports:
       - "8000:8000"
     depends_on:
@@ -32,12 +34,12 @@ services:
       - ./api:/app
 
   frontend:
-    image: nginx:alpine
+    build: ./frontend
     container_name: docuquery_frontend
+    environment:
+      - PORT=8080
     ports:
-      - "3000:80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html
+      - "3000:8080"
     depends_on:
       - api
 

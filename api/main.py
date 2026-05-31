@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from groq import Groq
 import os
+import json
+from typing import List, Optional
 from dotenv import load_dotenv
 
 from database import get_db, execute_query
@@ -27,9 +30,14 @@ class IngestRequest(BaseModel):
     source: str = ""
     content: str
 
+class Message(BaseModel):
+    role: str
+    content: str
+
 class QueryRequest(BaseModel):
     question: str
     top_k: int = 5
+    history: Optional[List[Message]] = []
 
 @app.get("/health")
 def health():
@@ -64,7 +72,7 @@ def query(request: QueryRequest, conn=Depends(get_db)):
     results = execute_query(
         conn,
         """
-        SELECT c.content, d.title, 
+        SELECT c.content, d.title,
                1 - (c.embedding <=> %s::vector) AS similarity
         FROM chunks c
         JOIN documents d ON c.document_id = d.id
@@ -78,32 +86,47 @@ def query(request: QueryRequest, conn=Depends(get_db)):
         raise HTTPException(status_code=404, detail="No relevant chunks found")
 
     context = "\n\n".join([r["content"] for r in results])
+    sources = [{"title": r["title"], "similarity": round(r["similarity"], 4)} for r in results]
 
-    prompt = f"""You are a helpful assistant. Answer the question using only the context provided below.
+    system_prompt = f"""You are a helpful assistant. Answer questions using only the context provided below.
 If the answer is not in the context, say "I don't have enough information to answer that."
 
 Context:
-{context}
+{context}"""
 
-Question: {request.question}
+    messages = [{"role": "system", "content": system_prompt}]
 
-Answer:"""
+    for msg in (request.history or []):
+        messages.append({"role": msg.role, "content": msg.content})
 
-    response = groq_client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.2,
-        max_tokens=512,
-    )
+    messages.append({"role": "user", "content": request.question})
 
-    answer = response.choices[0].message.content
+    def stream():
+        yield f"data: {json.dumps({'type': 'sources', 'sources': sources})}\n\n"
 
-    return {
-        "answer": answer,
-        "sources": [{"title": r["title"], "similarity": round(r["similarity"], 4)} for r in results]
-    }
+        stream_response = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=messages,
+            temperature=0.2,
+            max_tokens=512,
+            stream=True,
+        )
+
+        for chunk in stream_response:
+            token = chunk.choices[0].delta.content
+            if token:
+                yield f"data: {json.dumps({'type': 'token', 'token': token})}\n\n"
+
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
 
 @app.get("/documents")
 def list_documents(conn=Depends(get_db)):
     docs = execute_query(conn, "SELECT id, title, source, created_at FROM documents ORDER BY created_at DESC")
     return {"documents": docs}
+
+@app.delete("/documents/{document_id}")
+def delete_document(document_id: int, conn=Depends(get_db)):
+    execute_query(conn, "DELETE FROM documents WHERE id = %s", (document_id,))
+    return {"message": f"Document {document_id} deleted"}
