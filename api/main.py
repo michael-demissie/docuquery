@@ -35,6 +35,7 @@ class IngestRequest(BaseModel):
     title: str
     source: str = ""
     content: str
+    mode: str = "personal"
 
 class Message(BaseModel):
     role: str
@@ -44,6 +45,7 @@ class QueryRequest(BaseModel):
     question: str
     top_k: int = 5
     history: Optional[List[Message]] = []
+    mode: str = "personal"
 
 @app.get("/health")
 def health():
@@ -56,8 +58,8 @@ def ingest(request: IngestRequest, conn=Depends(get_db)):
 
     doc = execute_query(
         conn,
-        "INSERT INTO documents (title, source) VALUES (%s, %s) RETURNING id",
-        (request.title, request.source)
+        "INSERT INTO documents (title, source, mode) VALUES (%s, %s, %s) RETURNING id",
+        (request.title, request.source, request.mode)
     )
     document_id = doc[0]["id"]
 
@@ -74,8 +76,7 @@ def ingest(request: IngestRequest, conn=Depends(get_db)):
 @app.post("/query")
 @limiter.limit("10/minute")
 def query(request: Request, body: QueryRequest, conn=Depends(get_db)):
-    request = body
-    question_embedding = embed_text(request.question)
+    question_embedding = embed_text(body.question)
 
     results = execute_query(
         conn,
@@ -84,10 +85,11 @@ def query(request: Request, body: QueryRequest, conn=Depends(get_db)):
                1 - (c.embedding <=> %s::vector) AS similarity
         FROM chunks c
         JOIN documents d ON c.document_id = d.id
+        WHERE d.mode = %s
         ORDER BY c.embedding <=> %s::vector
         LIMIT %s
         """,
-        (question_embedding, question_embedding, request.top_k)
+        (question_embedding, body.mode, question_embedding, body.top_k)
     )
 
     if not results:
@@ -104,10 +106,10 @@ Context:
 
     messages = [{"role": "system", "content": system_prompt}]
 
-    for msg in (request.history or []):
+    for msg in (body.history or []):
         messages.append({"role": msg.role, "content": msg.content})
 
-    messages.append({"role": "user", "content": request.question})
+    messages.append({"role": "user", "content": body.question})
 
     def stream():
         yield f"data: {json.dumps({'type': 'sources', 'sources': sources})}\n\n"
