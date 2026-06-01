@@ -195,7 +195,7 @@
       <div class="welcome-icon">⚡</div>
       <h2>What do you want to know?</h2>
       <p>Ask anything about your uploaded documents. DocuQuery retrieves the most relevant context and generates precise answers.</p>
-      <div class="suggestions">
+      <div class="suggestions" id="welcome-suggestions">
         <button class="suggestion" onclick="useSuggestion(this)">What is Washington DC known for?<span class="suggestion-arrow">→</span></button>
         <button class="suggestion" onclick="useSuggestion(this)">What can I visit at the National Mall?<span class="suggestion-arrow">→</span></button>
         <button class="suggestion" onclick="useSuggestion(this)">Tell me about Georgetown University<span class="suggestion-arrow">→</span></button>
@@ -253,6 +253,20 @@
     return sid;
   }
   const SESSION_ID = getSessionId();
+
+  const personalSuggestions = [
+    "What is Washington DC known for?",
+    "What can I visit at the National Mall?",
+    "Tell me about Georgetown University",
+    "What are the main DC universities?"
+  ];
+
+  const jobsSuggestions = [
+    "What data engineer jobs are available in DC?",
+    "What Python skills do federal agencies require?",
+    "Which agencies are hiring machine learning engineers?",
+    "What is the salary range for federal tech jobs?"
+  ];
 
   function switchMode(mode) {
     currentMode = mode;
@@ -393,11 +407,8 @@
       <div class="welcome-icon">⚡</div>
       <h2>What do you want to know?</h2>
       <p>Ask anything about your uploaded documents. DocuQuery retrieves the most relevant context and generates precise answers.</p>
-      <div class="suggestions">
-        <button class="suggestion" onclick="useSuggestion(this)">What is Washington DC known for?<span class="suggestion-arrow">→</span></button>
-        <button class="suggestion" onclick="useSuggestion(this)">What can I visit at the National Mall?<span class="suggestion-arrow">→</span></button>
-        <button class="suggestion" onclick="useSuggestion(this)">Tell me about Georgetown University<span class="suggestion-arrow">→</span></button>
-        <button class="suggestion" onclick="useSuggestion(this)">What are the main DC universities?<span class="suggestion-arrow">→</span></button>
+      <div class="suggestions" id="welcome-suggestions">
+        ${(currentMode === "jobs" ? jobsSuggestions : personalSuggestions).map(s => `<button class="suggestion" onclick="useSuggestion(this)">${s}<span class="suggestion-arrow">→</span></button>`).join('')}
       </div>`;
     wrap.appendChild(welcome);
     document.getElementById('chat-title').textContent = 'New conversation';

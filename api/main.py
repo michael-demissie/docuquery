@@ -28,7 +28,7 @@ def run_cleanup():
         time.sleep(120)
         try:
             conn = next(get_db())
-            execute_query(conn, "DELETE FROM documents WHERE session_id != 'default' AND mode = 'personal' AND created_at < NOW() AT TIME ZONE 'UTC' - INTERVAL '2 minutes'")
+            execute_query(conn, "DELETE FROM documents WHERE session_id != 'default' AND mode = 'personal' AND created_at < NOW() AT TIME ZONE 'UTC' - INTERVAL '24 hours'")
             print("Auto cleanup ran")
         except Exception as e:
             print(f"Cleanup error: {e}")
@@ -171,7 +171,7 @@ def cleanup_session(session_id: str, conn=Depends(get_db)):
 
 @app.post("/cleanup-expired")
 def cleanup_expired(conn=Depends(get_db)):
-    execute_query(conn, "DELETE FROM documents WHERE session_id != 'default' AND mode = 'personal' AND created_at < NOW() AT TIME ZONE 'UTC' - INTERVAL '2 minutes'")
+    execute_query(conn, "DELETE FROM documents WHERE session_id != 'default' AND mode = 'personal' AND created_at < NOW() AT TIME ZONE 'UTC' - INTERVAL '24 hours'")
     return {"message": "Expired sessions cleaned up"}
 
 from fastapi import UploadFile, File, Form
