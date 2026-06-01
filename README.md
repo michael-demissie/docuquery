@@ -2,7 +2,7 @@
 
 > Ask questions. Get answers grounded in real documents.
 
-A production-grade **Retrieval-Augmented Generation (RAG)** pipeline built with FastAPI, PostgreSQL + pgvector, HuggingFace sentence-transformers, and Groq LLM. Features real-time streaming responses, PDF/TXT ingestion, chat history, and a ChatGPT-style interface with two modes — a personal document assistant and a live DC federal tech jobs explorer.
+A production-grade **Retrieval-Augmented Generation (RAG)** pipeline built with FastAPI, PostgreSQL + pgvector, HuggingFace sentence-transformers, and Groq LLM. Features real-time streaming, PDF/TXT ingestion, session-based document isolation, and a polished two-mode chat interface.
 
 **[Live Demo](https://balanced-manifestation-production-50d4.up.railway.app)** · **[API Docs](https://docuquery-production-872a.up.railway.app/docs)**
 
@@ -10,10 +10,12 @@ A production-grade **Retrieval-Augmented Generation (RAG)** pipeline built with 
 
 ## Features
 
-- **Two modes** — Personal document assistant + DC federal tech jobs explorer
+- **Two modes** — Personal document assistant (blue theme) + DC federal tech jobs explorer (amber theme)
 - **Real-time streaming** — Token-by-token response streaming like ChatGPT
 - **PDF & TXT upload** — Drag and drop documents directly from the UI
-- **Chat history** — Full conversational context across follow-up questions
+- **Session isolation** — Each browser session has its own private document space
+- **Auto-cleanup** — User-uploaded documents are automatically deleted after 24 hours
+- **Chat history** — Full conversational context across follow-up questions with per-mode state
 - **pgvector search** — HNSW index for fast cosine similarity search
 - **Airflow DAG** — Scheduled daily ingestion of federal tech jobs from USAJobs API
 - **Rate limiting** — 10 queries/min, 5 uploads/min per IP
@@ -24,7 +26,7 @@ A production-grade **Retrieval-Augmented Generation (RAG)** pipeline built with 
 ## Architecture
 
 ```
-Documents (PDF / TXT / API)
+Documents (PDF / TXT / USAJobs API)
         |
    Chunking (500 words, 50 overlap)
         |
@@ -92,7 +94,7 @@ docker-compose up --build
 ### 5. Ingest documents
 
 ```bash
-# Ingest a text file
+# Ingest a text file (personal mode)
 python3 ingestion/ingest.py --file your_document.txt --title "My Document"
 
 # Ingest a URL
@@ -112,18 +114,25 @@ python3 ingestion/ingest.py --file jobs.txt --title "Job Listings" --mode jobs
 | POST | /query | RAG query with streaming |
 | POST | /ingest | Ingest text content |
 | POST | /upload | Upload PDF or TXT file |
-| GET | /documents | List documents by mode |
+| GET | /documents | List documents by mode and session |
 | DELETE | /documents/{id} | Delete a document |
+| POST | /cleanup-expired | Manually trigger session cleanup |
+
+---
+
+## Two Modes
+
+### Personal Assistant (blue theme)
+Upload your own PDF or TXT files and chat with them. Each browser session gets a unique session ID stored in localStorage. Documents are automatically deleted after 24 hours. Default demo documents (DC Wikipedia articles) are always available.
+
+### DC Tech Jobs (amber theme)
+Pre-loaded with real federal tech job postings from USAJobs.gov, updated daily via an Apache Airflow DAG. Ask questions like "What Python skills do federal agencies require?" or "Which agencies are hiring data engineers?"
 
 ---
 
 ## Airflow DAG
 
-The airflow/dags/usajobs_ingest.py DAG runs daily at 7am and:
-
-1. Fetches federal tech job postings from USAJobs API
-2. Extracts title, agency, salary, qualifications, and duties
-3. Ingests each job as a chunk into PostgreSQL with mode=jobs
+The airflow/dags/usajobs_ingest.py DAG runs daily at 6am and fetches federal tech job postings for keywords including data engineer, software engineer, machine learning, cybersecurity, and more — filtered to IT occupational series codes (2210, 1550, 0854, 1560).
 
 To run locally:
 
