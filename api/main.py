@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from contextlib import asynccontextmanager
+import asyncio
+import threading
 from pydantic import BaseModel
 from groq import Groq
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -8,6 +11,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import os
 import json
+import time
 from typing import List, Optional
 from dotenv import load_dotenv
 
@@ -18,6 +22,20 @@ from chunker import chunk_text, clean_text
 load_dotenv()
 
 limiter = Limiter(key_func=get_remote_address)
+
+def run_cleanup():
+    while True:
+        time.sleep(120)
+        try:
+            conn = next(get_db())
+            execute_query(conn, "DELETE FROM documents WHERE session_id != 'default' AND mode = 'personal' AND created_at < NOW() AT TIME ZONE 'UTC' - INTERVAL '2 minutes'")
+            print("Auto cleanup ran")
+        except Exception as e:
+            print(f"Cleanup error: {e}")
+
+cleanup_thread = threading.Thread(target=run_cleanup, daemon=True)
+cleanup_thread.start()
+
 app = FastAPI(title="DocuQuery RAG API", version="1.0.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -36,6 +54,7 @@ class IngestRequest(BaseModel):
     source: str = ""
     content: str
     mode: str = "personal"
+    session_id: str = "default"
 
 class Message(BaseModel):
     role: str
@@ -46,6 +65,7 @@ class QueryRequest(BaseModel):
     top_k: int = 5
     history: Optional[List[Message]] = []
     mode: str = "personal"
+    session_id: str = "default"
 
 @app.get("/health")
 def health():
@@ -58,8 +78,8 @@ def ingest(request: IngestRequest, conn=Depends(get_db)):
 
     doc = execute_query(
         conn,
-        "INSERT INTO documents (title, source, mode) VALUES (%s, %s, %s) RETURNING id",
-        (request.title, request.source, request.mode)
+        "INSERT INTO documents (title, source, mode, session_id) VALUES (%s, %s, %s, %s) RETURNING id",
+        (request.title, request.source, request.mode, request.session_id)
     )
     document_id = doc[0]["id"]
 
@@ -85,11 +105,11 @@ def query(request: Request, body: QueryRequest, conn=Depends(get_db)):
                1 - (c.embedding <=> %s::vector) AS similarity
         FROM chunks c
         JOIN documents d ON c.document_id = d.id
-        WHERE d.mode = %s
+        WHERE d.mode = %s AND (d.session_id = %s OR d.session_id = 'default')
         ORDER BY c.embedding <=> %s::vector
         LIMIT %s
         """,
-        (question_embedding, body.mode, question_embedding, body.top_k)
+        (question_embedding, body.mode, body.session_id, question_embedding, body.top_k)
     )
 
     if not results:
@@ -132,8 +152,11 @@ Context:
     return StreamingResponse(stream(), media_type="text/event-stream")
 
 @app.get("/documents")
-def list_documents(mode: str = "personal", conn=Depends(get_db)):
-    docs = execute_query(conn, "SELECT id, title, source, created_at, mode FROM documents WHERE mode = %s ORDER BY created_at DESC", (mode,))
+def list_documents(mode: str = "personal", session_id: str = "default", conn=Depends(get_db)):
+    if mode == "jobs":
+        docs = execute_query(conn, "SELECT id, title, source, created_at, mode FROM documents WHERE mode = %s ORDER BY created_at DESC", (mode,))
+    else:
+        docs = execute_query(conn, "SELECT id, title, source, created_at, mode FROM documents WHERE mode = %s AND (session_id = %s OR session_id = 'default') ORDER BY created_at DESC", (mode, session_id))
     return {"documents": docs}
 
 @app.delete("/documents/{document_id}")
@@ -141,13 +164,23 @@ def delete_document(document_id: int, conn=Depends(get_db)):
     execute_query(conn, "DELETE FROM documents WHERE id = %s", (document_id,))
     return {"message": f"Document {document_id} deleted"}
 
-from fastapi import UploadFile, File
+@app.delete("/sessions/{session_id}")
+def cleanup_session(session_id: str, conn=Depends(get_db)):
+    execute_query(conn, "DELETE FROM documents WHERE session_id = %s AND session_id != 'default'", (session_id,))
+    return {"message": f"Session {session_id} cleaned up"}
+
+@app.post("/cleanup-expired")
+def cleanup_expired(conn=Depends(get_db)):
+    execute_query(conn, "DELETE FROM documents WHERE session_id != 'default' AND mode = 'personal' AND created_at < NOW() AT TIME ZONE 'UTC' - INTERVAL '2 minutes'")
+    return {"message": "Expired sessions cleaned up"}
+
+from fastapi import UploadFile, File, Form
 import pypdf
 import io
 
 @app.post("/upload")
 @limiter.limit("5/minute")
-async def upload_file(request: Request, file: UploadFile = File(...), title: str = "", conn=Depends(get_db)):
+async def upload_file(request: Request, file: UploadFile = File(...), title: str = Form(""), session_id: str = Form("default"), conn=Depends(get_db)):
     content = await file.read()
 
     if len(content) > 10 * 1024 * 1024:
@@ -168,8 +201,8 @@ async def upload_file(request: Request, file: UploadFile = File(...), title: str
 
     doc = execute_query(
         conn,
-        "INSERT INTO documents (title, source) VALUES (%s, %s) RETURNING id",
-        (doc_title, file.filename)
+        "INSERT INTO documents (title, source, mode, session_id) VALUES (%s, %s, %s, %s) RETURNING id",
+        (doc_title, file.filename, "personal", session_id)
     )
     document_id = doc[0]["id"]
 

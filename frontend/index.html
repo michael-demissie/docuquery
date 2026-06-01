@@ -243,6 +243,17 @@
   let selectedFile = null;
   let currentMode = "personal";
 
+  // Generate or retrieve session ID
+  function getSessionId() {
+    let sid = localStorage.getItem('docuquery_session_id');
+    if (!sid) {
+      sid = 'sess_' + Math.random().toString(36).substr(2, 16) + Date.now().toString(36);
+      localStorage.setItem('docuquery_session_id', sid);
+    }
+    return sid;
+  }
+  const SESSION_ID = getSessionId();
+
   function switchMode(mode) {
     currentMode = mode;
     history = [];
@@ -266,7 +277,7 @@
 
   async function loadDocuments() {
     try {
-      const res = await fetch(`${API}/documents?mode=${currentMode}`);
+      const res = await fetch(`${API}/documents?mode=${currentMode}&session_id=${SESSION_ID}`);
       const data = await res.json();
       renderDocs(data.documents);
     } catch(e) {}
@@ -340,6 +351,7 @@
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('title', title);
+      formData.append('session_id', SESSION_ID);
       fill.style.width = '60%';
       status.textContent = 'Chunking & embedding...';
       const resp = await fetch(`${API}/upload`, {
@@ -477,7 +489,7 @@
       const res = await fetch(`${API}/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, top_k: 5, history, mode: currentMode })
+        body: JSON.stringify({ question, top_k: 5, history, mode: currentMode, session_id: SESSION_ID })
       });
 
       if (!res.ok) throw new Error('No relevant documents found in knowledge base.');
@@ -525,7 +537,7 @@
   }
 
   loadDocuments();
-  setInterval(loadDocuments, 10000);
+  setInterval(loadDocuments, 3000);
 </script>
 </body>
 </html>
