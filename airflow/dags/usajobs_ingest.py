@@ -21,6 +21,8 @@ TECH_KEYWORDS = [
     "devops", "backend engineer", "full stack"
 ]
 
+TECH_SERIES = ["2210", "1550", "0854", "1560", "2211", "0855"]
+
 default_args = {
     "owner": "michael",
     "retries": 2,
@@ -41,7 +43,8 @@ def fetch_and_ingest_jobs():
             "Keyword": keyword,
             "LocationName": "Washington DC",
             "ResultsPerPage": 50,
-            "Fields": "Min"
+            "Fields": "Min",
+            "JobCategoryCode": ";".join(TECH_SERIES)
         }
         try:
             res = requests.get(

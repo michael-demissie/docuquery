@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
+    /* ── TOKENS ── */
     :root {
       --bg: #08090c;
       --surface: #0f1117;
@@ -18,26 +19,92 @@
       --text: #e8eaf0;
       --text2: #8b90a0;
       --text3: #555a6e;
+      --radius: 12px;
+      --sidebar-w: 280px;
+      /* mode-specific — default personal (blue) */
       --accent: #4f8ef7;
       --accent2: #7c6af5;
       --accent-glow: rgba(79,142,247,0.15);
+      --user-bubble: #4f8ef7;
       --green: #3dd68c;
       --amber: #f5a524;
       --red: #f5524a;
-      --radius: 12px;
-      --sidebar-w: 280px;
+    }
+    body.mode-jobs {
+      --accent: #f5a524;
+      --accent2: #e8890c;
+      --accent-glow: rgba(245,165,36,0.15);
+      --user-bubble: #e8890c;
+      --bg: #0c0a06;
+      --surface: #13100a;
+      --surface2: #1a1508;
+      --surface3: #241d0a;
+      --border: rgba(255,200,80,0.07);
+      --border2: rgba(255,200,80,0.14);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
-    .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; transition: background 0.4s, color 0.2s; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; overflow: hidden; transition: background 0.4s, border-color 0.4s; }
     .sidebar-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); }
     .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-    .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: background 0.4s; }
     .logo-text { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.3px; }
-    .logo-text span { color: var(--accent); }
+    .logo-text span { color: var(--accent); transition: color 0.4s; }
+
+    /* mode switcher pill */
+    .mode-switcher { position: relative; margin-bottom: 12px; }
+    .mode-current-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+    .mode-current-btn:hover { border-color: var(--accent); }
+    .mode-current-btn .mode-label { display: flex; align-items: center; gap: 8px; }
+    .mode-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); transition: background 0.4s; }
+    .mode-chevron { color: var(--text3); font-size: 0.7rem; transition: transform 0.2s; }
+    .mode-chevron.open { transform: rotate(180deg); }
+    .mode-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0; right: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      overflow: hidden;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .mode-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+    .mode-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text2);
+      transition: background 0.15s;
+    }
+    .mode-option:hover { background: var(--surface3); color: var(--text); }
+
     .upload-btn { width: 100%; background: var(--surface3); border: 1px dashed var(--border2); border-radius: var(--radius); padding: 10px 14px; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
     .upload-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
-    .mode-btn.active { background: var(--accent) !important; color: white !important; border-color: var(--accent) !important; }
     .sidebar-section { padding: 14px 20px 8px; }
     .section-label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text3); margin-bottom: 10px; }
     .doc-list { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
@@ -56,17 +123,26 @@
     .sidebar-footer { padding: 14px 20px; border-top: 1px solid var(--border); }
     .tech-badges { display: flex; flex-wrap: wrap; gap: 6px; }
     .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 8px; font-size: 0.68rem; font-family: 'DM Mono', monospace; color: var(--text3); }
-    .main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* jobs info banner */
+    .jobs-info-banner { background: var(--accent-glow); border: 1px solid var(--accent); border-radius: 8px; padding: 10px 12px; font-size: 0.78rem; color: var(--text2); line-height: 1.5; margin-bottom: 0; }
+    .jobs-info-banner strong { color: var(--accent); }
+
+    /* ── MAIN ── */
+    .main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; transition: background 0.4s; }
     .top-bar { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .top-bar-title { font-size: 0.9rem; font-weight: 500; color: var(--text2); }
+    .mode-indicator { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 500; color: var(--accent); background: var(--accent-glow); border: 1px solid var(--accent); border-radius: 999px; padding: 4px 10px; transition: all 0.4s; }
     .icon-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
     .icon-btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface2); }
     .chat-wrap { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; }
     .chat-wrap::-webkit-scrollbar { width: 4px; }
     .chat-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* welcome */
     .welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; animation: fadeUp 0.5s ease both; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    .welcome-icon { width: 56px; height: 56px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 20px; box-shadow: 0 0 40px rgba(79,142,247,0.25); }
+    .welcome-icon { width: 56px; height: 56px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 20px; box-shadow: 0 0 40px var(--accent-glow); transition: background 0.4s, box-shadow 0.4s; }
     .welcome h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 8px; }
     .welcome p { color: var(--text2); font-size: 0.95rem; max-width: 400px; line-height: 1.6; margin-bottom: 32px; }
     .suggestions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 480px; }
@@ -74,14 +150,16 @@
     .suggestion:hover { border-color: var(--accent); color: var(--text); background: var(--accent-glow); }
     .suggestion-arrow { margin-left: auto; opacity: 0; transition: opacity 0.15s; color: var(--accent); flex-shrink: 0; }
     .suggestion:hover .suggestion-arrow { opacity: 1; }
+
+    /* messages */
     .msg-group { display: flex; flex-direction: column; margin-bottom: 24px; animation: fadeUp 0.3s ease both; }
     .msg-row { display: flex; gap: 12px; align-items: flex-start; }
     .msg-row.user { flex-direction: row-reverse; }
     .avatar { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; margin-top: 2px; }
-    .avatar.ai { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+    .avatar.ai { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; transition: background 0.4s; }
     .avatar.user { background: var(--surface3); color: var(--text2); font-size: 11px; }
     .bubble { max-width: 75%; padding: 12px 16px; border-radius: 14px; font-size: 0.92rem; line-height: 1.65; }
-    .msg-row.user .bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+    .msg-row.user .bubble { background: var(--user-bubble); color: white; border-bottom-right-radius: 4px; transition: background 0.4s; }
     .msg-row.ai .bubble { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; white-space: pre-wrap; }
     .msg-time { font-size: 0.7rem; color: var(--text3); margin-top: 5px; padding: 0 4px; }
     .sources-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-left: 42px; }
@@ -97,17 +175,36 @@
     .typing-dot:nth-child(2) { animation-delay: 0.2s; }
     .typing-dot:nth-child(3) { animation-delay: 0.4s; }
     @keyframes typingDot { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
-    .cursor { display: inline-block; width: 2px; height: 0.9em; background: var(--accent); margin-left: 1px; vertical-align: text-bottom; animation: cursorBlink 0.7s infinite; }
+    .cursor { display: inline-block; width: 2px; height: 0.9em; background: var(--accent); margin-left: 1px; vertical-align: text-bottom; animation: cursorBlink 0.7s infinite; transition: background 0.4s; }
     @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* input */
     .input-area { padding: 16px 24px 20px; flex-shrink: 0; border-top: 1px solid var(--border); }
     .input-box { display: flex; align-items: flex-end; gap: 10px; background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; padding: 10px 10px 10px 16px; transition: border-color 0.2s; }
     .input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
     .input-box textarea { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.92rem; line-height: 1.5; resize: none; min-height: 24px; max-height: 120px; padding: 2px 0; }
     .input-box textarea::placeholder { color: var(--text3); }
-    .send-btn { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
-    .send-btn:hover { background: #6aa0f9; transform: scale(1.05); }
+    .send-btn { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+    .send-btn:hover { opacity: 0.85; transform: scale(1.05); }
     .send-btn:disabled { background: var(--surface3); cursor: not-allowed; transform: none; }
     .input-hint { text-align: center; font-size: 0.72rem; color: var(--text3); margin-top: 10px; }
+
+    /* confirm modal */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .confirm-overlay.open { opacity: 1; pointer-events: all; }
+    .confirm-modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 28px; width: 380px; max-width: 90vw; transform: translateY(12px); transition: transform 0.2s, background 0.4s; }
+    .confirm-overlay.open .confirm-modal { transform: translateY(0); }
+    .confirm-modal h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+    .confirm-modal p { font-size: 0.88rem; color: var(--text2); line-height: 1.5; margin-bottom: 20px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn { padding: 9px 18px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; }
+    .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text2); }
+    .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+    .btn-primary { background: var(--accent); color: white; transition: background 0.4s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { background: var(--surface3); color: var(--text3); cursor: not-allowed; }
+
+    /* upload modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
     .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 28px; width: 440px; max-width: 90vw; transform: translateY(12px); transition: transform 0.2s; }
@@ -123,12 +220,6 @@
     .modal-input:focus { border-color: var(--accent); }
     .modal-input::placeholder { color: var(--text3); }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-    .btn { padding: 9px 18px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; }
-    .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text2); }
-    .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-primary:hover { background: #6aa0f9; }
-    .btn-primary:disabled { background: var(--surface3); color: var(--text3); cursor: not-allowed; }
     .progress-bar { width: 100%; height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; margin-bottom: 12px; display: none; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; width: 0%; transition: width 0.3s ease; }
     .status-msg { font-size: 0.8rem; text-align: center; margin-bottom: 12px; min-height: 20px; }
@@ -137,33 +228,46 @@
     @media (max-width: 640px) { .sidebar { display: none; } }
   </style>
 </head>
-<body>
+<body class="mode-personal">
 
+<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-header">
     <div class="logo">
       <div class="logo-icon">⚡</div>
       <div class="logo-text">Docu<span>Query</span></div>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:12px;">
-      <button class="mode-btn active" data-mode="personal" onclick="switchMode('personal')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.15s;">
-        📄 Personal
+
+    <!-- Mode switcher -->
+    <div class="mode-switcher" id="mode-switcher">
+      <button class="mode-current-btn" onclick="toggleModeDropdown()">
+        <span class="mode-label">
+          <span class="mode-dot"></span>
+          <span id="mode-current-label">📄 Personal Assistant</span>
+        </span>
+        <span class="mode-chevron" id="mode-chevron">▼</span>
       </button>
-      <button class="mode-btn" data-mode="jobs" onclick="switchMode('jobs')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.15s;">
-        💼 DC Jobs
-      </button>
+      <div class="mode-dropdown" id="mode-dropdown">
+        <div class="mode-option" id="mode-option-jobs" onclick="requestModeSwitch('jobs')">
+          💼 DC Tech Jobs
+        </div>
+      </div>
     </div>
+
     <div id="upload-area">
-    <button class="upload-btn" onclick="openUpload()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Upload document
-    </button>
+      <button class="upload-btn" onclick="openUpload()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload document
+      </button>
     </div>
-    <div id="jobs-info" style="display:none;background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:0.78rem;color:var(--text2);line-height:1.5;">
-      🔄 Updated daily via Airflow<br/>
-      <span style="color:var(--text3)">Federal tech jobs in DC</span>
+    <div id="jobs-info" style="display:none">
+      <div class="jobs-info-banner">
+        🔄 <strong>Updated daily</strong> via Airflow<br/>
+        <span style="color:var(--text3)">Federal tech jobs across DC agencies</span>
+      </div>
     </div>
   </div>
+
   <div class="sidebar-section">
     <div class="section-label" id="section-label">Knowledge Base</div>
   </div>
@@ -181,28 +285,20 @@
   </div>
 </aside>
 
+<!-- MAIN -->
 <main class="main">
   <div class="top-bar">
     <span class="top-bar-title" id="chat-title">New conversation</span>
-    <button class="icon-btn" onclick="clearChat()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.24"/></svg>
-      New chat
-    </button>
-  </div>
-
-  <div class="chat-wrap" id="chat-wrap">
-    <div class="welcome" id="welcome">
-      <div class="welcome-icon">⚡</div>
-      <h2>What do you want to know?</h2>
-      <p>Ask anything about your uploaded documents. DocuQuery retrieves the most relevant context and generates precise answers.</p>
-      <div class="suggestions" id="welcome-suggestions">
-        <button class="suggestion" onclick="useSuggestion(this)">What is Washington DC known for?<span class="suggestion-arrow">→</span></button>
-        <button class="suggestion" onclick="useSuggestion(this)">What can I visit at the National Mall?<span class="suggestion-arrow">→</span></button>
-        <button class="suggestion" onclick="useSuggestion(this)">Tell me about Georgetown University<span class="suggestion-arrow">→</span></button>
-        <button class="suggestion" onclick="useSuggestion(this)">What are the main DC universities?<span class="suggestion-arrow">→</span></button>
-      </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="mode-indicator" id="mode-indicator">📄 Personal</div>
+      <button class="icon-btn" onclick="clearChat()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.24"/></svg>
+        New chat
+      </button>
     </div>
   </div>
+
+  <div class="chat-wrap" id="chat-wrap"></div>
 
   <div class="input-area">
     <div class="input-box">
@@ -216,6 +312,19 @@
   </div>
 </main>
 
+<!-- MODE SWITCH CONFIRM MODAL -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <h3 id="confirm-title">Switch mode?</h3>
+    <p id="confirm-body">Your current chat will be saved and restored when you switch back.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="cancelModeSwitch()">Cancel</button>
+      <button class="btn btn-primary" id="confirm-switch-btn" onclick="confirmModeSwitch()">Switch</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeUploadIfBg(event)">
   <div class="modal">
     <h3>Upload Document</h3>
@@ -239,11 +348,8 @@
 
 <script>
   const API = window.location.hostname === "localhost" ? "http://localhost:8000" : "https://docuquery-production-872a.up.railway.app";
-  let history = [];
-  let selectedFile = null;
-  let currentMode = "personal";
 
-  // Generate or retrieve session ID
+  // session
   function getSessionId() {
     let sid = localStorage.getItem('docuquery_session_id');
     if (!sid) {
@@ -254,13 +360,23 @@
   }
   const SESSION_ID = getSessionId();
 
+  // per-mode state
+  const modeState = {
+    personal: { history: [], chatHTML: '', title: 'New conversation' },
+    jobs:     { history: [], chatHTML: '', title: 'New conversation' }
+  };
+
+  let currentMode = 'personal';
+  let selectedFile = null;
+  let pendingMode = null;
+  let dropdownOpen = false;
+
   const personalSuggestions = [
     "What is Washington DC known for?",
     "What can I visit at the National Mall?",
     "Tell me about Georgetown University",
     "What are the main DC universities?"
   ];
-
   const jobsSuggestions = [
     "What data engineer jobs are available in DC?",
     "What Python skills do federal agencies require?",
@@ -268,27 +384,130 @@
     "What is the salary range for federal tech jobs?"
   ];
 
-  function switchMode(mode) {
-    currentMode = mode;
-    history = [];
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
-    document.getElementById('upload-area').style.display = mode === "personal" ? "block" : "none";
-    document.getElementById('jobs-info').style.display = mode === "jobs" ? "block" : "none";
-    document.getElementById('section-label').textContent = mode === "personal" ? "Knowledge Base" : "Live Job Data";
-    clearChat();
+  // ── MODE SWITCHER ──
+  function toggleModeDropdown() {
+    dropdownOpen = !dropdownOpen;
+    document.getElementById('mode-dropdown').classList.toggle('open', dropdownOpen);
+    document.getElementById('mode-chevron').classList.toggle('open', dropdownOpen);
+  }
+
+  document.addEventListener('click', e => {
+    if (!document.getElementById('mode-switcher').contains(e.target)) {
+      dropdownOpen = false;
+      document.getElementById('mode-dropdown').classList.remove('open');
+      document.getElementById('mode-chevron').classList.remove('open');
+    }
+  });
+
+  function requestModeSwitch(newMode) {
+    if (newMode === currentMode) { toggleModeDropdown(); return; }
+    pendingMode = newMode;
+    dropdownOpen = false;
+    document.getElementById('mode-dropdown').classList.remove('open');
+    document.getElementById('mode-chevron').classList.remove('open');
+
+    const fromLabel = currentMode === 'personal' ? 'Personal Assistant' : 'DC Tech Jobs';
+    const toLabel = newMode === 'personal' ? 'Personal Assistant' : 'DC Tech Jobs';
+    const toEmoji = newMode === 'personal' ? '📄' : '💼';
+
+    document.getElementById('confirm-title').textContent = `Switch to ${toEmoji} ${toLabel}?`;
+    document.getElementById('confirm-body').textContent = `Your ${fromLabel} chat will be saved and restored when you switch back.`;
+    document.getElementById('confirm-overlay').classList.add('open');
+  }
+
+  function cancelModeSwitch() {
+    pendingMode = null;
+    document.getElementById('confirm-overlay').classList.remove('open');
+  }
+
+  function confirmModeSwitch() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+    if (!pendingMode) return;
+    applyModeSwitch(pendingMode);
+    pendingMode = null;
+  }
+
+  function applyModeSwitch(newMode) {
+    // save current mode state
+    modeState[currentMode].history = [...history];
+    modeState[currentMode].chatHTML = document.getElementById('chat-wrap').innerHTML;
+    modeState[currentMode].title = document.getElementById('chat-title').textContent;
+
+    currentMode = newMode;
+
+    // apply theme
+    document.body.className = 'mode-' + newMode;
+
+    // update mode indicator
+    const isJobs = newMode === 'jobs';
+    document.getElementById('mode-indicator').textContent = isJobs ? '💼 DC Jobs' : '📄 Personal';
+    document.getElementById('mode-current-label').textContent = isJobs ? '💼 DC Tech Jobs' : '📄 Personal Assistant';
+    document.getElementById('mode-option-jobs').textContent = isJobs ? '📄 Personal Assistant' : '💼 DC Tech Jobs';
+    document.getElementById('mode-option-jobs').onclick = () => requestModeSwitch(isJobs ? 'personal' : 'jobs');
+
+    document.getElementById('upload-area').style.display = isJobs ? 'none' : 'block';
+    document.getElementById('jobs-info').style.display = isJobs ? 'block' : 'none';
+    document.getElementById('section-label').textContent = isJobs ? 'Live Job Data' : 'Knowledge Base';
+
+    // restore saved state or show welcome
+    history = [...modeState[newMode].history];
+    const wrap = document.getElementById('chat-wrap');
+    if (modeState[newMode].chatHTML) {
+      wrap.innerHTML = modeState[newMode].chatHTML;
+      document.getElementById('chat-title').textContent = modeState[newMode].title;
+    } else {
+      renderWelcome();
+    }
+
     loadDocuments();
   }
+
+  // ── HELPERS ──
+  let history = [];
 
   function autoResize(el) {
     el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }
-
   function handleKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askQuestion(); }
   }
 
+  function renderWelcome() {
+    const suggestions = currentMode === 'jobs' ? jobsSuggestions : personalSuggestions;
+    const wrap = document.getElementById('chat-wrap');
+    wrap.innerHTML = '';
+    const welcome = document.createElement('div');
+    welcome.className = 'welcome';
+    welcome.id = 'welcome';
+    welcome.innerHTML = `
+      <div class="welcome-icon">${currentMode === 'jobs' ? '💼' : '⚡'}</div>
+      <h2>${currentMode === 'jobs' ? 'Explore DC Tech Jobs' : 'What do you want to know?'}</h2>
+      <p>${currentMode === 'jobs'
+        ? 'Ask about federal tech job openings, required skills, salary ranges, and hiring agencies — updated daily.'
+        : 'Ask anything about your uploaded documents. DocuQuery retrieves the most relevant context and generates precise answers.'}</p>
+      <div class="suggestions">
+        ${suggestions.map(s => `<button class="suggestion" onclick="useSuggestion(this)">${s}<span class="suggestion-arrow">→</span></button>`).join('')}
+      </div>`;
+    wrap.appendChild(welcome);
+    document.getElementById('chat-title').textContent = 'New conversation';
+  }
+
+  function clearChat() {
+    modeState[currentMode].history = [];
+    modeState[currentMode].chatHTML = '';
+    modeState[currentMode].title = 'New conversation';
+    history = [];
+    renderWelcome();
+  }
+
+  function useSuggestion(btn) {
+    const text = btn.textContent.replace('→','').trim();
+    document.getElementById('question').value = text;
+    askQuestion();
+  }
+
+  // ── DOCUMENTS ──
   async function loadDocuments() {
     try {
       const res = await fetch(`${API}/documents?mode=${currentMode}&session_id=${SESSION_ID}`);
@@ -310,7 +529,7 @@
       item.innerHTML = `
         <div class="doc-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
         <div class="doc-info"><div class="doc-title">${doc.title}</div><div class="doc-meta">${date}</div></div>
-        <button class="doc-delete" onclick="deleteDoc(${doc.id},event)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+        ${doc.session_id !== 'default' ? `<button class="doc-delete" onclick="deleteDoc(${doc.id},event)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>` : ''}
       `;
       list.appendChild(item);
     });
@@ -322,8 +541,8 @@
     loadDocuments();
   }
 
+  // ── UPLOAD ──
   function openUpload() { document.getElementById('modal-overlay').classList.add('open'); }
-
   function closeUpload() {
     document.getElementById('modal-overlay').classList.remove('open');
     selectedFile = null;
@@ -336,13 +555,11 @@
     document.getElementById('status-msg').className = 'status-msg';
     document.getElementById('drop-zone').querySelector('p').innerHTML = '<span>Click to browse</span> or drag & drop';
   }
-
   function closeUploadIfBg(e) { if (e.target === document.getElementById('modal-overlay')) closeUpload(); }
   function dragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('dragover'); }
   function dragLeave() { document.getElementById('drop-zone').classList.remove('dragover'); }
   function dropFile(e) { e.preventDefault(); document.getElementById('drop-zone').classList.remove('dragover'); const f = e.dataTransfer.files[0]; if(f) handleFile(f); }
   function fileSelected(e) { handleFile(e.target.files[0]); }
-
   function handleFile(file) {
     selectedFile = file;
     document.getElementById('doc-title').value = file.name.replace(/\.[^/.]+$/, '');
@@ -368,10 +585,7 @@
       formData.append('session_id', SESSION_ID);
       fill.style.width = '60%';
       status.textContent = 'Chunking & embedding...';
-      const resp = await fetch(`${API}/upload`, {
-        method: 'POST',
-        body: formData
-      });
+      const resp = await fetch(`${API}/upload`, { method: 'POST', body: formData });
       fill.style.width = '100%';
       if (resp.ok) {
         const data = await resp.json();
@@ -390,30 +604,7 @@
     }
   }
 
-  function useSuggestion(btn) {
-    const text = btn.textContent.replace('→','').trim();
-    document.getElementById('question').value = text;
-    askQuestion();
-  }
-
-  function clearChat() {
-    history = [];
-    const wrap = document.getElementById('chat-wrap');
-    wrap.innerHTML = '';
-    const welcome = document.createElement('div');
-    welcome.className = 'welcome';
-    welcome.id = 'welcome';
-    welcome.innerHTML = `
-      <div class="welcome-icon">⚡</div>
-      <h2>What do you want to know?</h2>
-      <p>Ask anything about your uploaded documents. DocuQuery retrieves the most relevant context and generates precise answers.</p>
-      <div class="suggestions" id="welcome-suggestions">
-        ${(currentMode === "jobs" ? jobsSuggestions : personalSuggestions).map(s => `<button class="suggestion" onclick="useSuggestion(this)">${s}<span class="suggestion-arrow">→</span></button>`).join('')}
-      </div>`;
-    wrap.appendChild(welcome);
-    document.getElementById('chat-title').textContent = 'New conversation';
-  }
-
+  // ── CHAT ──
   function nowTime() {
     return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
@@ -433,10 +624,11 @@
 
     const wrap = document.getElementById('chat-wrap');
     if (document.getElementById('chat-title').textContent === 'New conversation') {
-      document.getElementById('chat-title').textContent = question.slice(0,40) + (question.length>40?'…':'');
+      const t = question.slice(0,40) + (question.length>40?'…':'');
+      document.getElementById('chat-title').textContent = t;
+      modeState[currentMode].title = t;
     }
 
-    // User bubble
     const userGroup = document.createElement('div');
     userGroup.className = 'msg-group';
     userGroup.innerHTML = `
@@ -448,7 +640,6 @@
     wrap.appendChild(userGroup);
     wrap.scrollTop = wrap.scrollHeight;
 
-    // Typing indicator
     const typingEl = document.createElement('div');
     typingEl.className = 'typing';
     typingEl.innerHTML = `
@@ -459,7 +650,6 @@
     wrap.appendChild(typingEl);
     wrap.scrollTop = wrap.scrollHeight;
 
-    // AI group (will replace typing)
     const aiGroup = document.createElement('div');
     aiGroup.className = 'msg-group';
     const bubbleId = 'bubble-' + Date.now();
@@ -491,6 +681,8 @@
         if (el) el.innerHTML = displayedText;
         history.push({ role: 'user', content: question });
         history.push({ role: 'assistant', content: displayedText });
+        modeState[currentMode].history = [...history];
+        modeState[currentMode].chatHTML = wrap.innerHTML;
         btn.disabled = false;
         input.focus();
       }
@@ -502,7 +694,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, top_k: 5, history, mode: currentMode, session_id: SESSION_ID })
       });
-
       if (!res.ok) throw new Error('No relevant documents found in knowledge base.');
 
       typingEl.replaceWith(aiGroup);
@@ -511,7 +702,6 @@
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -535,7 +725,6 @@
           } catch(e) {}
         }
       }
-
     } catch(err) {
       if (!typingReplaced) typingEl.replaceWith(aiGroup);
       tick();
@@ -547,6 +736,8 @@
     }
   }
 
+  // ── INIT ──
+  renderWelcome();
   loadDocuments();
   setInterval(loadDocuments, 3000);
 </script>
