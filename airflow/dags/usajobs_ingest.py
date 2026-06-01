@@ -5,7 +5,15 @@ from datetime import datetime, timedelta
 import requests
 import os
 
-API_URL = Variable.get("DOCUQUERY_API_URL", default_var="https://docuquery-production-872a.up.railway.app")
+import socket
+def get_api_url():
+    try:
+        socket.connect(("localhost", 8000))
+        return "http://localhost:8000"
+    except:
+        return Variable.get("DOCUQUERY_API_URL", default_var="https://docuquery-production-872a.up.railway.app")
+
+API_URL = get_api_url()
 
 TECH_KEYWORDS = [
     "data engineer", "software engineer", "machine learning",
