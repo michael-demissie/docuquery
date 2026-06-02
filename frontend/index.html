@@ -375,12 +375,38 @@ body {font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);hei
 .status-msg.err {color:#dc2626}
 .u-actions {display:flex;gap:8px;justify-content:flex-end}
 
-@media(max-width:640px){.sidebar{display:none}}
+@media(max-width:640px){
+  .sidebar {
+    position:fixed;left:0;top:0;bottom:0;z-index:150;
+    transform:translateX(-100%);transition:transform 0.3s ease;
+    box-shadow:4px 0 20px rgba(0,0,0,0.15);
+  }
+  .sidebar.open {transform:translateX(0)}
+  .sidebar-overlay {
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,0.4);z-index:140;
+    backdrop-filter:blur(2px);
+  }
+  .sidebar-overlay.open {display:block}
+  .hamburger {
+    display:flex;flex-direction:column;justify-content:center;
+    gap:4px;background:none;border:none;cursor:pointer;
+    padding:4px;width:28px;height:28px;flex-shrink:0;
+  }
+  .hamburger span {
+    display:block;height:2px;background:var(--text);
+    border-radius:2px;transition:all 0.2s;
+  }
+}
+@media(min-width:641px){
+  .hamburger{display:none}
+  .sidebar-overlay{display:none}
+}
 </style>
 </head>
 <body>
 
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="s-head">
     <div class="logo">
       <div class="logo-mark">
@@ -434,7 +460,12 @@ body {font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);hei
 
 <main class="main">
   <div class="topbar">
-    <span class="chat-label" id="chat-label">New conversation</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <span class="chat-label" id="chat-label">New conversation</span>
+    </div>
     <div class="topbar-right">
       <span class="mode-badge" id="mode-badge">Personal</span>
       <button class="newchat-btn" onclick="clearChat()">
@@ -491,6 +522,7 @@ body {font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 </div>
 
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 <script>
 const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://docuquery-production-872a.up.railway.app';
 
@@ -830,6 +862,15 @@ if (mode === 'jobs') {
   loadDocs();
 }
 setInterval(loadDocs, 3000);
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
 </script>
 </body>
 </html>
